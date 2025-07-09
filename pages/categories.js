@@ -87,10 +87,10 @@ export default function Categories({ existingImages }) {
   }
 
   async function deleteCategory(category) {
-    const { _id } = category;
+    const { id } = category;
     try {
-      await axios.delete('/api/categories?_id=' + _id);
-      fetchCategories();
+      await axios.delete('/api/categories?_id=' + id);
+      setCategories((prev) => prev.filter((cat) => cat.id !== id));
       toast.success('Category deleted!!');
     } catch (error) {
       console.error('Error deleting category:', error);

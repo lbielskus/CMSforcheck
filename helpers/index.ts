@@ -1,4 +1,3 @@
-import { signIn } from 'next-auth/react';
 import { LoginUserParams } from '../types';
 import { InputErros } from '../types/error';
 
@@ -9,12 +8,5 @@ export const getErrorMsg = (key: string, errors: InputErros[]) => {
   }
 };
 
-export const loginUser = async ({ email, password }: LoginUserParams) => {
-  const res = await signIn('credentials', {
-    redirect: false,
-    email,
-    password,
-  });
-
-  return res;
-};
+// Remove loginUser function that uses next-auth
+// If you need a Firebase login helper, implement it using Firebase Auth SDK

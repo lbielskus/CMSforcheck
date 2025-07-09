@@ -1,4 +1,5 @@
 import { adminDb } from '../../lib/firebaseAdmin';
+import axios from 'axios';
 
 export default async function handle(req, res) {
   const categoriesRef = adminDb.collection('categories');
@@ -61,4 +62,10 @@ export default async function handle(req, res) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
+}
+
+function editCategory(category) {
+  setEditedCategory(category);
+  setName(category.name);
+  setParentCategory(category.parent?._id || category.parent || '');
 }

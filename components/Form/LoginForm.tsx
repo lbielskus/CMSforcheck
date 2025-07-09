@@ -40,7 +40,7 @@ const LoginForm = () => {
     if (!loading && submitError === '' && email !== '' && password !== '') {
       window.history.pushState(null, '', '/');
     }
-  }, [loading, submitError]);
+  }, [loading, submitError, email, password]);
 
   return (
     <section className='bg-gray-50 dark:bg-gray-50'>

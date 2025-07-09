@@ -1,14 +1,14 @@
 import { getAuth } from 'firebase/auth';
-import axios from 'axios';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-// import img1 from '../../public/product.png';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { app } from '../../lib/firebaseClient'; // adjust path if needed
+import { app } from '../../lib/firebaseClient';
+import axios from 'axios';
+import { formatDate } from '../../utils/firebase'; // or the correct path to your formatDate utility
 
 const formatPrice = (price) => {
-  return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0';
 };
 
 const pageSize = 10;
@@ -18,32 +18,34 @@ export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
-      setUser(firebaseUser);
-      if (!firebaseUser) {
-        router.replace('/login');
+    const unsubscribe = getAuth(app).onAuthStateChanged(
+      async (firebaseUser) => {
+        setUser(firebaseUser);
+        if (!firebaseUser) {
+          router.replace('/login');
+        } else {
+          try {
+            setLoading(true);
+            const response = await axios.get('/api/products');
+            setProducts(response.data);
+          } catch (err) {
+            setError('Failed to fetch products');
+          } finally {
+            setLoading(false);
+          }
+        }
       }
-    });
+    );
     return () => unsubscribe();
   }, [router]);
 
-  useEffect(() => {
-    if (user) {
-      axios.get('/api/products').then((response) => {
-        setProducts(response.data);
-        setLoading(false);
-      });
-    }
-  }, [user]);
-
   const totalPages = Math.ceil(products.length / pageSize);
-
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(currentPage * pageSize, products.length);
-
   const productsToDisplay = products.slice(startIndex, endIndex);
 
   const changePage = (page) => {
@@ -54,8 +56,6 @@ export default function ProductsPage() {
   if (!user) {
     return null;
   }
-
-  console.log('Product import:', ProductsPage);
 
   return (
     <>
@@ -98,7 +98,10 @@ export default function ProductsPage() {
       </header>
 
       <div className={`overflow-x-auto mx-auto px-4 ml-24`}>
-        {products.length === 0 ? (
+        {error && <div className='text-red-600'>{error}</div>}
+        {loading ? (
+          <p className='w-full text-center'>Kraunama...</p>
+        ) : products.length === 0 ? (
           <p className='w-full text-center'>Nėra sukurtų kelionių.</p>
         ) : (
           <>
@@ -108,19 +111,20 @@ export default function ProductsPage() {
                   <th>Nr.</th>
                   <th>Pavadinimas</th>
                   <th>Kaina</th>
+                  <th>Data</th>
                   <th>Veiksmai</th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-200'>
                 {productsToDisplay.map((product, index) => (
-                  <tr key={product._id}>
+                  <tr key={product.id}>
                     <td className='whitespace-nowrap px-4 py-2 font-medium text-gray-900'>
                       {index + 1}
                     </td>
-                    <td className='whitespace-nowrap px-4 py-2 font-medium text-gray-900 flex items-center  gap-1'>
+                    <td className='whitespace-nowrap px-4 py-2 font-medium text-gray-900 flex items-center gap-1'>
                       <div className='h-10 w-10'>
-                        <Image
-                          src={product.images?.[0] || img1}
+                        <img
+                          src={product.images?.[0] || '/product.png'}
                           alt={product.title}
                           width={100}
                           height={100}
@@ -132,15 +136,18 @@ export default function ProductsPage() {
                     <td className='whitespace-nowrap px-4 py-2 text-gray-700'>
                       € {formatPrice(product.price)}
                     </td>
+                    <td className='whitespace-nowrap px-4 py-2 text-gray-700'>
+                      {product.createdAt ? formatDate(product.createdAt) : '–'}
+                    </td>
                     <td className='whitespace-nowrap px-4 py-2 gap-4 flex'>
                       <Link
-                        href={'/products/edit/' + product._id}
+                        href={'/products/edit/' + product.id}
                         className='inline-block rounded bg-green-500 px-4 py-2 text-xs font-medium text-white hover:bg-green-700'
                       >
                         Redaguoti
                       </Link>
                       <Link
-                        href={'/products/delete/' + product._id}
+                        href={'/products/delete/' + product.id}
                         className='inline-block rounded bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-700'
                       >
                         Ištrinti

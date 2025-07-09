@@ -28,7 +28,8 @@
     "**/*.tsx",
     "pages/index.js",
     "node_modules/@types",
-    "importToFirestore.cts"
+    "importToFirestore.cts",
+    "utils/firebase.js"
   ],
   "exclude": ["node_modules"]
 }

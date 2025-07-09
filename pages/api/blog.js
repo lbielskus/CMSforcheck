@@ -21,10 +21,24 @@ export default async function handler(req, res) {
         .collection('blog')
         .orderBy('createdAt', 'desc')
         .get();
-      const posts = snapshot.docs.map((doc) => ({
-        _id: doc.id,
-        ...doc.data(),
-      }));
+      const posts = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        // Convert all Firestore Timestamp fields to ISO strings
+        Object.keys(data).forEach((key) => {
+          if (
+            data[key] &&
+            typeof data[key] === 'object' &&
+            '_seconds' in data[key] &&
+            '_nanoseconds' in data[key]
+          ) {
+            data[key] = new Date(data[key]._seconds * 1000).toISOString();
+          }
+        });
+        return {
+          _id: doc.id,
+          ...data,
+        };
+      });
       res.status(200).json(posts);
     } catch (error) {
       console.error('Error fetching blog posts:', error);
@@ -52,8 +66,20 @@ export default async function handler(req, res) {
       console.error('Error creating blog post:', error);
       res.status(500).json({ message: 'Server error' });
     }
+  } else if (req.method === 'DELETE') {
+    try {
+      const { id } = req.query;
+      if (!id) {
+        return res.status(400).json({ message: 'Missing id' });
+      }
+      await db.collection('blog').doc(id).delete();
+      res.status(200).json({ message: 'Blog deleted' });
+    } catch (error) {
+      console.error('Error deleting blog post:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
   } else {
-    res.setHeader('Allow', ['GET', 'POST']);
+    res.setHeader('Allow', ['GET', 'POST', 'DELETE']);
     res.status(405).json({ message: `Method ${req.method} Not Allowed` });
   }
 }

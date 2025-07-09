@@ -46,11 +46,7 @@ const Blogs = () => {
               <p className='text-gray-600 mb-2'>
                 Published on{' '}
                 {post.createdAt
-                  ? typeof post.createdAt === 'string'
-                    ? new Date(post.createdAt).toLocaleString()
-                    : post.createdAt._seconds
-                    ? new Date(post.createdAt._seconds * 1000).toLocaleString()
-                    : ''
+                  ? new Date(post.createdAt).toLocaleString()
                   : ''}
               </p>
               <p className='text-gray-700'>{post.excerpt}</p>
