@@ -1,22 +1,34 @@
-import Product from '../../../components/Product';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { getAuth } from 'firebase/auth';
+import { app } from '../../../lib/firebaseClient'; // adjust path if needed
 
 export default function EditProduct() {
   const router = useRouter();
   const { id } = router.query;
   const [productInfo, setProductInfo] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (!id) {
+    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (!id || !user) {
       return;
     }
     axios.get('/api/products?id=' + id).then((response) => {
       setProductInfo(response.data);
     });
-  }, [id]);
+  }, [id, user]);
 
   function goBack() {
     router.push('/products');
@@ -27,6 +39,9 @@ export default function EditProduct() {
     toast.success('Product deleted!!');
     goBack();
   }
+
+  if (!user) return null;
+
   return (
     <>
       <div className='fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-2'>

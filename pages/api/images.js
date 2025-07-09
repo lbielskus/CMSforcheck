@@ -1,32 +1,37 @@
-import { mongooseConnect } from '../../lib/mongoose';
-import { Media } from '../../models/Media';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 export default async function handle(req, res) {
-  await mongooseConnect();
+  const mediaRef = adminDb.collection('media');
 
   try {
     if (req.method === 'POST') {
       const { name, description, images, firstBanner, secondBanner, route } =
         req.body;
-
-      const imageUrls = Array.isArray(images) ? images : [];
-
-      const mediaDoc = await Media.create({
+      const docRef = await mediaRef.add({
         name,
         description,
-        images: imageUrls,
+        images: Array.isArray(images) ? images : [],
         firstBanner,
         secondBanner,
         route,
+        createdAt: new Date(),
       });
-      res.json(mediaDoc);
+      const newDoc = await docRef.get();
+      res.json({ id: docRef.id, ...newDoc.data() });
     } else if (req.method === 'GET') {
       if (req.query?.id) {
-        const media = await Media.findOne({ _id: req.query.id });
-        res.json(media);
+        const doc = await mediaRef.doc(req.query.id).get();
+        if (!doc.exists) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+        res.json({ id: doc.id, ...doc.data() });
       } else {
-        const categories = await Media.find();
-        res.json(categories);
+        const snapshot = await mediaRef.get();
+        const media = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        res.json(media);
       }
     } else if (req.method === 'PUT') {
       const {
@@ -38,25 +43,20 @@ export default async function handle(req, res) {
         secondBanner,
         route,
       } = req.body;
-
-      const imageUrls = Array.isArray(images) ? images : [];
-
-      const mediaDoc = await Media.findOneAndUpdate(
-        { _id },
-        {
-          name,
-          description,
-          images: imageUrls,
-          firstBanner,
-          secondBanner,
-          route,
-        },
-        { new: true }
-      );
-      res.json(mediaDoc);
+      await mediaRef.doc(_id).update({
+        name,
+        description,
+        images: Array.isArray(images) ? images : [],
+        firstBanner,
+        secondBanner,
+        route,
+        updatedAt: new Date(),
+      });
+      const updatedDoc = await mediaRef.doc(_id).get();
+      res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } else if (req.method === 'DELETE') {
       const { _id } = req.query;
-      await Media.deleteOne({ _id });
+      await mediaRef.doc(_id).delete();
       res.json({ message: 'Media deleted successfully' });
     } else {
       res.status(405).json({ error: 'Method Not Allowed' });

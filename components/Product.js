@@ -7,19 +7,21 @@ import toast from 'react-hot-toast';
 import Image from 'next/image';
 import TinyMCEEditor from './TinyMCEEditor'; // Import TinyMCEEditor component
 
-export default function Product({
-  _id,
-  title: existingTitle,
-  description: existingDescription,
-  price: existingPrice,
-  images: existingImages,
-  category: selectedCategory,
-  details: existingDetails,
-  brand: existingBrand,
-  colors: existingColors,
-  gender: existingGender,
-  sizes: existingSizes,
-}) {
+export default function Product(props) {
+  const {
+    _id,
+    title: existingTitle,
+    description: existingDescription,
+    price: existingPrice,
+    images: existingImages,
+    category: selectedCategory,
+    details: existingDetails,
+    brand: existingBrand,
+    colors: existingColors,
+    gender: existingGender,
+    sizes: existingSizes,
+  } = props;
+
   const [title, setTitle] = useState(existingTitle || '');
   const [description, setDescription] = useState(existingDescription || '');
   const [price, setPrice] = useState(existingPrice || '');

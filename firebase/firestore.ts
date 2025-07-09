@@ -1,5 +1,5 @@
 // firebase/firestore.ts
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs } from 'firebase/firestore/lite';
 import { app, db as firestore } from './init';
 
 const getBlogs = async () => {

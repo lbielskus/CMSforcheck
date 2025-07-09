@@ -1,15 +1,22 @@
-import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BsFillImageFill } from 'react-icons/bs';
+import { getAuth } from 'firebase/auth';
+import { app } from '../lib/firebaseClient'; // adjust path if needed
 
 export default function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const router = useRouter();
   const { pathname } = router;
+
+  useEffect(() => {
+    const unsubscribe = getAuth(app).onAuthStateChanged(setUser);
+    return () => unsubscribe();
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -30,9 +37,7 @@ export default function Sidebar() {
   const active = 'active-class';
   const inActive = 'inactive-class';
 
-  const { data: session } = useSession();
-
-  if (session) {
+  if (user) {
     return (
       <>
         <button
@@ -217,4 +222,7 @@ export default function Sidebar() {
       </>
     );
   }
+
+  // Optionally, render nothing or a minimal header if not logged in
+  return null;
 }

@@ -1,6 +1,25 @@
+import { useEffect, useState } from 'react';
+import { getAuth } from 'firebase/auth';
+import { useRouter } from 'next/router';
+import { app } from '../../lib/firebaseClient'; // adjust path if needed
 import Product from '../../components/Product';
 
 export default function NewProduct() {
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  if (!user) return null;
+
   return (
     <>
       <section className='p-4'>

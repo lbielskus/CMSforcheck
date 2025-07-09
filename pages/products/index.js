@@ -1,9 +1,11 @@
-import { useSession } from 'next-auth/react';
+import { getAuth } from 'firebase/auth';
 import axios from 'axios';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import img1 from '../../public/product.png';
+// import img1 from '../../public/product.png';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { app } from '../../lib/firebaseClient'; // adjust path if needed
 
 const formatPrice = (price) => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -11,20 +13,31 @@ const formatPrice = (price) => {
 
 const pageSize = 10;
 
-export default function Product() {
-  const { data: session } = useSession();
+export default function ProductsPage() {
+  const [user, setUser] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const router = useRouter();
 
   useEffect(() => {
-    if (session) {
+    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (user) {
       axios.get('/api/products').then((response) => {
         setProducts(response.data);
         setLoading(false);
       });
     }
-  }, [session]);
+  }, [user]);
 
   const totalPages = Math.ceil(products.length / pageSize);
 
@@ -38,9 +51,11 @@ export default function Product() {
     setLoading(false);
   };
 
-  if (!session) {
+  if (!user) {
     return null;
   }
+
+  console.log('Product import:', ProductsPage);
 
   return (
     <>
@@ -88,10 +103,17 @@ export default function Product() {
         ) : (
           <>
             <table className='min-w-full divide-y-2 divide-gray-200 bg-white text-sm border rounded mb-44'>
-              <thead>{/* Table header */}</thead>
-              {productsToDisplay.map((product, index) => (
-                <tbody className='divide-y divide-gray-200' key={product._id}>
-                  <tr>
+              <thead>
+                <tr>
+                  <th>Nr.</th>
+                  <th>Pavadinimas</th>
+                  <th>Kaina</th>
+                  <th>Veiksmai</th>
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-gray-200'>
+                {productsToDisplay.map((product, index) => (
+                  <tr key={product._id}>
                     <td className='whitespace-nowrap px-4 py-2 font-medium text-gray-900'>
                       {index + 1}
                     </td>
@@ -107,9 +129,6 @@ export default function Product() {
                       </div>
                       {product.title}
                     </td>
-                    {/* <td className='whitespace-nowrap px-4 py-2 text-gray-700 truncate max-w-sm'>
-                      {product.description}
-                    </td> */}
                     <td className='whitespace-nowrap px-4 py-2 text-gray-700'>
                       € {formatPrice(product.price)}
                     </td>
@@ -128,8 +147,8 @@ export default function Product() {
                       </Link>
                     </td>
                   </tr>
-                </tbody>
-              ))}
+                ))}
+              </tbody>
             </table>
 
             {/* Pagination */}

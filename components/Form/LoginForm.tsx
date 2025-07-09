@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '../../helpers';
-import { AiOutlineMail, AiOutlineUnlock } from 'react-icons/ai';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../lib/firebaseClient';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -25,16 +25,12 @@ const LoginForm = () => {
 
     try {
       setLoading(true);
+      setSubmitError('');
 
-      const loginRes = await loginUser({ email, password });
-
-      if (loginRes && !loginRes.ok) {
-        setSubmitError(loginRes.error || '');
-      } else {
-        window.location.href = '/';
-      }
-    } catch (error) {
-      setSubmitError('An error occurred. Please try again later.');
+      await signInWithEmailAndPassword(auth, email, password);
+      // User is signed in, redirect will happen in parent useEffect
+    } catch (err: any) {
+      setSubmitError(err.message);
     }
 
     setLoading(false);

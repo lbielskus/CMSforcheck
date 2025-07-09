@@ -1,7 +1,6 @@
 import multiparty from 'multiparty';
 import cloudinary from 'cloudinary';
-import { mongooseConnect } from '../../lib/mongoose';
-import Media from '../../models/Media';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,8 +9,6 @@ cloudinary.v2.config({
 });
 
 export default async function handle(req, res) {
-  await mongooseConnect();
-
   const form = new multiparty.Form();
 
   try {
@@ -37,17 +34,17 @@ export default async function handle(req, res) {
       }
     }
 
-    const newMedia = new Media({
-      title: fields.title[0],
-      description: fields.description[0],
-      url: links,
+    // Save media metadata to Firestore
+    await adminDb.collection('media').add({
+      title: fields.title ? fields.title[0] : '',
+      description: fields.description ? fields.description[0] : '',
+      urls: links,
+      createdAt: new Date().toISOString(),
     });
-    await newMedia.save();
 
     return res.json({ links });
   } catch (error) {
     console.error('Error uploading media:', error);
-
     return res.status(500).json({ error: 'Error uploading media' });
   }
 }

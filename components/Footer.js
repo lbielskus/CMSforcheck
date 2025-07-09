@@ -9,7 +9,7 @@ export default function Footer() {
           <div className='flex justify-center text-text sm:justify-start'>
             <Link href='/'>
               <div className='flex gap-1 items-center text-text font-medium text-lg hover:text-zinc-400'>
-                <Image
+                <img
                   src='https://res.cloudinary.com/dcknlnne1/image/upload/c_pad,b_auto:predominant,fl_preserve_transparency/v1709827936/favicon-32x32_rllh9h.jpg?_s=public-apps'
                   alt='Logo'
                   width={24}

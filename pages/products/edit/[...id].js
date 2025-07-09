@@ -2,22 +2,37 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import { getAuth } from 'firebase/auth';
+import { app } from '../../../lib/firebaseClient'; // adjust path if needed
 import Product from '../../../components/Product';
 
 export default function EditProductPage() {
   const [productInfo, setProductInfo] = useState(null);
+  const [user, setUser] = useState(null);
   const router = useRouter();
   const { id = [] } = router.query;
 
-  const actualId = id.length ? id[0] : null;
+  const actualId = Array.isArray(id) && id.length ? id[0] : null;
 
   useEffect(() => {
-    if (!actualId) return;
+    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        router.replace('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (!actualId || !user) return;
 
     axios.get(`/api/products?id=${actualId}`).then((res) => {
       setProductInfo(res.data);
     });
-  }, [actualId]);
+  }, [actualId, user]);
+
+  if (!user) return null;
 
   return (
     <div>

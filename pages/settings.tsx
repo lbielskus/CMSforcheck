@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { getAuth, signOut as firebaseSignOut, User } from 'firebase/auth';
+import { app } from '../lib/firebaseClient'; // adjust path if needed
 
 const UserProfile = () => {
-  const { data: session, status } = useSession();
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'loading') return;
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    } else {
+    const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
-    }
-  }, [status, router]);
+      if (!firebaseUser) {
+        router.push('/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      console.log('User signed out successfully.');
+      await firebaseSignOut(getAuth(app));
       router.push('/login');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -32,15 +34,13 @@ const UserProfile = () => {
 
   return (
     <div className='flex justify-center items-center h-screen w-full'>
-      <div className='flex flex-col justify-center items-center w-full  h-full p-16'>
-        {session && session.user && (
+      <div className='flex flex-col justify-center items-center w-full h-full p-16'>
+        {user && (
           <>
             <h3 className='mb-4 text-2xl'>
-              {' '}
-              Sveiki, {session.user.fullName || ''} !
+              Sveiki, {user.displayName || user.email || ''}!
             </h3>
-            <h5 className='mb-4 text-slateblue'>{session.user.email}</h5>
-
+            <h5 className='mb-4 text-slateblue'>{user.email}</h5>
             <button
               className='bg-third hover:bg-hover3 text-white bg-purple-900 hover:bg-purple-800 font-bold py-2 px-4 rounded'
               onClick={handleSignOut}

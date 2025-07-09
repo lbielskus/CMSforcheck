@@ -1,51 +1,58 @@
-import { mongooseConnect } from '../../lib/mongoose';
-import { Category } from '../../models/Category';
+import { adminDb } from '../../lib/firebaseAdmin';
 
 export default async function handle(req, res) {
-  await mongooseConnect();
+  const categoriesRef = adminDb.collection('categories');
 
   try {
     if (req.method === 'POST') {
       const { name, parentCategoryId, images, description } = req.body;
-
-      const imageUrls = Array.isArray(images) ? images : [];
-
-      const categoryDoc = await Category.create({
+      if (!name) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+      const docRef = await categoriesRef.add({
         name,
         parent: parentCategoryId || null,
-        images: imageUrls,
+        images: Array.isArray(images) ? images : [],
         description,
+        createdAt: new Date().toISOString(),
       });
-      res.json(categoryDoc);
+      const newDoc = await docRef.get();
+      res.json({ id: docRef.id, ...newDoc.data() });
     } else if (req.method === 'GET') {
       if (req.query?.id) {
-        const category = await Category.findOne({ _id: req.query.id }).populate(
-          'parent'
-        );
-        res.json(category);
+        const doc = await categoriesRef.doc(req.query.id).get();
+        if (!doc.exists) {
+          return res.status(404).json({ error: 'Not found' });
+        }
+        res.json({ id: doc.id, ...doc.data() });
       } else {
-        const categories = await Category.find().populate('parent');
+        const snapshot = await categoriesRef.get();
+        const categories = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
         res.json(categories);
       }
     } else if (req.method === 'PUT') {
       const { name, parentCategoryId, _id, images, description } = req.body;
-
-      const imageUrls = Array.isArray(images) ? images : [];
-
-      const categoryDoc = await Category.findOneAndUpdate(
-        { _id },
-        {
-          name,
-          parent: parentCategoryId || null,
-          images: imageUrls,
-          description,
-        },
-        { new: true }
-      );
-      res.json(categoryDoc);
+      if (!_id) {
+        return res.status(400).json({ error: 'Missing _id' });
+      }
+      await categoriesRef.doc(_id).update({
+        name,
+        parent: parentCategoryId || null,
+        images: Array.isArray(images) ? images : [],
+        description,
+        updatedAt: new Date().toISOString(),
+      });
+      const updatedDoc = await categoriesRef.doc(_id).get();
+      res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } else if (req.method === 'DELETE') {
       const { _id } = req.query;
-      await Category.deleteOne({ _id });
+      if (!_id) {
+        return res.status(400).json({ error: 'Missing _id' });
+      }
+      await categoriesRef.doc(_id).delete();
       res.json({ message: 'Category deleted successfully' });
     } else {
       res.status(405).json({ error: 'Method Not Allowed' });

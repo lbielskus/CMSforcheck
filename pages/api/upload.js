@@ -1,6 +1,5 @@
 import multiparty from 'multiparty';
 import cloudinary from 'cloudinary';
-import { mongooseConnect } from '../../lib/mongoose';
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -9,8 +8,6 @@ cloudinary.v2.config({
 });
 
 export default async function handle(req, res) {
-  await mongooseConnect();
-
   const form = new multiparty.Form();
   const { fields, files } = await new Promise((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
@@ -27,8 +24,7 @@ export default async function handle(req, res) {
       resource_type: 'auto',
     });
 
-    const link = result.secure_url;
-    links.push(link);
+    links.push(result.secure_url);
   }
 
   return res.json({ links });
