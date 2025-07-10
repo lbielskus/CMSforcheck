@@ -113,7 +113,15 @@ async function extractFromWord(filePath) {
     return result.value;
   } catch (error) {
     console.error('Error extracting from Word:', error);
-    return '';
+    
+    // If mammoth fails (e.g., for .doc files), try to read as text
+    try {
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+      return fileContent;
+    } catch (textError) {
+      console.error('Could not extract text from Word document:', textError);
+      return `[Nepavyko išgauti teksto iš Word dokumento. Prašome konvertuoti į .docx formatą arba nukopijuoti tekstą rankiniu būdu.]`;
+    }
   }
 }
 
@@ -169,11 +177,11 @@ async function extractFromImage(filePath) {
 }
 
 async function processWithAI(extractedTexts) {
+  const combinedText = extractedTexts
+    .map((item) => `=== ${item.fileName} ===\n${item.content}`)
+    .join('\n\n');
+    
   try {
-    const combinedText = extractedTexts
-      .map((item) => `=== ${item.fileName} ===\n${item.content}`)
-      .join('\n\n');
-
     const prompt = `
 Analizuok šį kelionės dokumentą ir išgauk struktūrizuotą informaciją JSON formatu.
 Sugrąžink duomenis šiuo formatu:
