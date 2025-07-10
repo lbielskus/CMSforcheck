@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 
-const TinyMCEEditor = ({ initialValue, onEditorChange }) => {
+const TinyMCEEditor = ({ value, onEditorChange }) => {
   const editorRef = useRef(null);
   const apiKey = process.env.NEXT_PUBLIC_TINYMCE_API_KEY;
 
@@ -9,7 +9,7 @@ const TinyMCEEditor = ({ initialValue, onEditorChange }) => {
     <Editor
       apiKey={apiKey}
       onInit={(_evt, editor) => (editorRef.current = editor)}
-      initialValue={initialValue}
+      value={value}
       init={{
         height: 500,
         directionality: 'ltr', // Default directionality

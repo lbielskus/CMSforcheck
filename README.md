@@ -1,4 +1,20 @@
+# PolitravelCMS
+
 Content management system by LB Websites 2024
+
+## Recent Updates (2025-01-10)
+
+- ✅ Fixed sidebar navigation with active state highlighting
+- ✅ Improved responsive design and mobile layout
+- ✅ Enhanced document parser for .doc/.docx/.txt files
+- ✅ Fixed image upload API with Cloudinary integration
+- ✅ Modernized UI with card layouts and better buttons
+- ✅ Fixed syntax errors in categories and products pages
+- ✅ Removed global footer, moved info to sidebar
+- ✅ Added AI-powered travel document parsing for Lithuanian docs
+- ✅ **Fixed TinyMCE editor displaying saved content in edit forms**
+- ✅ **Added TinyMCE rich text editor to blog content ("Straipsnio turinys")**
+- ✅ **All text fields now properly load and display saved content when editing**
 
 //2024-04-02
 

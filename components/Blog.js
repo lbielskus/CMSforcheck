@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Spinner from './Spinner';
 import toast from 'react-hot-toast';
+import TinyMCEEditor from './TinyMCEEditor';
 
 export default function Blog({
   _id,
@@ -107,18 +108,18 @@ export default function Blog({
 
         <div className='grid grid-cols-2 items-center my-4'>
           <label className='col-span-1 block text-lg font-medium text-gray-700 mb-3'>
-            Straipsnis
+            Straipsnio turinys
           </label>
           <div className='col-span-2'>
-            <textarea
-              type='text'
-              className='block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-400 focus:ring focus:ring-primary-200 focus:ring-opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 border p-3'
-              placeholder='Straipsnis'
-              rows={6}
-              required
-              value={content}
-              onChange={(ev) => setContent(ev.target.value)}
-            />
+            <div className='border-2 border-gray-200 rounded-lg overflow-hidden focus-within:border-primary-500 transition-colors'>
+              <TinyMCEEditor
+                value={content}
+                onEditorChange={(content) => setContent(content)}
+              />
+            </div>
+            <p className='text-xs text-gray-500 mt-2'>
+              Straipsnio turinys su formatavimo galimybėmis ir nuorodomis.
+            </p>
           </div>
         </div>
 
