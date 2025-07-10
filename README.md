@@ -15,6 +15,9 @@ Content management system by LB Websites 2024
 - ✅ **Fixed TinyMCE editor displaying saved content in edit forms**
 - ✅ **Added TinyMCE rich text editor to blog content ("Straipsnio turinys")**
 - ✅ **All text fields now properly load and display saved content when editing**
+- ✅ **Fixed BlogEnhanced component to use TinyMCE with link and formatting tools**
+- ✅ **Fixed redirect after saving - now goes to correct modern UI pages**
+- ✅ **Added link button to TinyMCE toolbar for URL linking**
 
 //2024-04-02
 

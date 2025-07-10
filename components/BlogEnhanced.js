@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Spinner from './Spinner';
+import TinyMCEEditor from './TinyMCEEditor';
 import {
   getCurrentDateForInput,
   formatDateEuropean,
@@ -154,7 +155,7 @@ export default function BlogEnhanced({
       try {
         await axios.delete(`/api/blog/${_id}`);
         toast.success('Straipsnis ištrintas!');
-        router.push('/blogs');
+        router.push('/blog');
       } catch (error) {
         console.error('Error deleting blog post:', error);
         toast.error('Nepavyko ištrinti straipsnio.');
@@ -163,7 +164,7 @@ export default function BlogEnhanced({
   }
 
   if (redirect) {
-    router.push('/blogs');
+    router.push('/blog');
     return null;
   }
 
@@ -404,19 +405,21 @@ export default function BlogEnhanced({
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
                   Straipsnio turinys *
                 </label>
-                <textarea
-                  className={`block w-full rounded-lg border-2 ${
+                <div
+                  className={`border-2 ${
                     errors.content ? 'border-red-300' : 'border-gray-200'
-                  } focus:border-purple-500 focus:ring-0 p-3 transition-colors`}
-                  placeholder='Rašykite straipsnio turinį...'
-                  rows={12}
-                  value={content}
-                  onChange={(ev) => setContent(ev.target.value)}
-                />
+                  } rounded-lg overflow-hidden focus-within:border-purple-500 transition-colors`}
+                >
+                  <TinyMCEEditor
+                    value={content}
+                    onEditorChange={(content) => setContent(content)}
+                  />
+                </div>
                 {errors.content && (
                   <p className='text-red-500 text-sm mt-1'>{errors.content}</p>
                 )}
                 <p className='text-sm text-gray-500 mt-1'>
+                  Straipsnio turinys su formatavimo galimybėmis ir nuorodomis.
                   Simbolių: {content.length}
                 </p>
               </div>
@@ -438,7 +441,7 @@ export default function BlogEnhanced({
 
                 <button
                   type='button'
-                  onClick={() => router.push('/blogs')}
+                  onClick={() => router.push('/blog')}
                   className='px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors'
                 >
                   Atšaukti

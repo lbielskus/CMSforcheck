@@ -38,7 +38,7 @@ const TinyMCEEditor = ({ value, onEditorChange }) => {
         toolbar:
           'undo redo | formatselect | bold italic forecolor backcolor | ' +
           'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | ' +
-          'removeformat | help | ltr rtl', // Include ltr and rtl buttons in the toolbar
+          'link | removeformat | help | ltr rtl', // Added link button
         content_style:
           'body { font-family: Helvetica, Arial, sans-serif; font-size: 14px; direction: ltr; }', // Fixed content_style format
         style_formats_merge: true,
