@@ -46,24 +46,104 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     try {
-      const { title, content, excerpt, ...rest } = req.body;
+      const { title, content, excerpt, images, createdAt, category, ...rest } =
+        req.body;
       if (!title || !content) {
         return res
           .status(400)
           .json({ message: 'Title and content are required' });
       }
+
+      // Handle creation date - use provided date or current date
+      let blogCreatedAt;
+      if (createdAt) {
+        blogCreatedAt = Timestamp.fromDate(new Date(createdAt));
+      } else {
+        blogCreatedAt = Timestamp.now();
+      }
+
       const docRef = await db.collection('blog').add({
         title,
         content,
-        excerpt: excerpt || '',
-        createdAt: Timestamp.now(),
+        excerpt: excerpt || content.substring(0, 200) + '...',
+        images: images || [],
+        category: category || '',
+        createdAt: blogCreatedAt,
+        updatedAt: Timestamp.now(),
         ...rest,
       });
-      res
-        .status(201)
-        .json({ _id: docRef.id, title, content, excerpt, ...rest });
+
+      res.status(201).json({
+        _id: docRef.id,
+        title,
+        content,
+        excerpt,
+        images: images || [],
+        category,
+        createdAt: blogCreatedAt.toDate().toISOString(),
+        ...rest,
+      });
     } catch (error) {
       console.error('Error creating blog post:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  } else if (req.method === 'PUT') {
+    try {
+      const {
+        _id,
+        title,
+        content,
+        excerpt,
+        images,
+        createdAt,
+        category,
+        ...rest
+      } = req.body;
+      if (!_id) {
+        return res.status(400).json({ message: 'Missing blog post ID' });
+      }
+      if (!title || !content) {
+        return res
+          .status(400)
+          .json({ message: 'Title and content are required' });
+      }
+
+      // Handle creation date - use provided date or keep existing
+      let blogCreatedAt;
+      if (createdAt) {
+        blogCreatedAt = Timestamp.fromDate(new Date(createdAt));
+      } else {
+        // Keep existing createdAt if not provided
+        const existingDoc = await db.collection('blog').doc(_id).get();
+        blogCreatedAt = existingDoc.data()?.createdAt || Timestamp.now();
+      }
+
+      await db
+        .collection('blog')
+        .doc(_id)
+        .update({
+          title,
+          content,
+          excerpt: excerpt || content.substring(0, 200) + '...',
+          images: images || [],
+          category: category || '',
+          createdAt: blogCreatedAt,
+          updatedAt: Timestamp.now(),
+          ...rest,
+        });
+
+      res.status(200).json({
+        _id,
+        title,
+        content,
+        excerpt,
+        images: images || [],
+        category,
+        createdAt: blogCreatedAt.toDate().toISOString(),
+        message: 'Blog updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating blog post:', error);
       res.status(500).json({ message: 'Server error' });
     }
   } else if (req.method === 'DELETE') {

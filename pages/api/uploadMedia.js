@@ -48,7 +48,3 @@ export default async function handle(req, res) {
     return res.status(500).json({ error: 'Error uploading media' });
   }
 }
-
-export const config = {
-  api: { bodyParser: false },
-};

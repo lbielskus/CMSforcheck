@@ -9,16 +9,7 @@ export default function AIDocumentParser({
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  const supportedFormats = [
-    '.docx',
-    '.doc',
-    '.pdf',
-    '.txt',
-    '.jpg',
-    '.jpeg',
-    '.png',
-    '.webp',
-  ];
+  const supportedFormats = ['.docx', '.doc', '.txt'];
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -51,7 +42,7 @@ export default function AIDocumentParser({
     });
 
     if (validFiles.length === 0) {
-      toast.error('Palaikomi formatai: Word, PDF, TXT, JPG, PNG');
+      toast.error('Palaikomi formatai: Word (.docx, .doc), TXT');
       return;
     }
 
@@ -61,7 +52,7 @@ export default function AIDocumentParser({
 
   const processFiles = async (files) => {
     setIsProcessing(true);
-    toast.loading('Apdorojama su AI...', { id: 'processing' });
+    toast.loading('Apdorojamas dokumentas...', { id: 'processing' });
 
     try {
       const formData = new FormData();
@@ -69,7 +60,7 @@ export default function AIDocumentParser({
         formData.append('files', file);
       });
 
-      const response = await fetch('/api/ai-document-parser', {
+      const response = await fetch('/api/simple-document-parser', {
         method: 'POST',
         body: formData,
       });
@@ -80,10 +71,15 @@ export default function AIDocumentParser({
 
       const extractedData = await response.json();
 
-      // Call parent component with extracted data
-      onDataExtracted(extractedData);
-
-      toast.success('Duomenys sėkmingai išgauti!', { id: 'processing' });
+      // Handle the new response format from simple-document-parser
+      if (extractedData.suggestions) {
+        onDataExtracted(extractedData.suggestions);
+        toast.success('Duomenys sėkmingai išgauti!', { id: 'processing' });
+      } else {
+        toast.error('Nepavyko išgauti duomenų iš dokumento', {
+          id: 'processing',
+        });
+      }
     } catch (error) {
       console.error('Error processing files:', error);
       toast.error('Klaida apdorojant failus', { id: 'processing' });

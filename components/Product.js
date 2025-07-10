@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 // Import modular components
@@ -74,7 +74,6 @@ export default function Product(props) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
-  const uploadImagesQueue = [];
   const [categories, setCategories] = useState([]);
   const [category, setCategory] = useState(selectedCategory || '');
   const [errors, setErrors] = useState({});
@@ -84,6 +83,30 @@ export default function Product(props) {
       setCategories(result.data);
     });
   }, []);
+
+  // Helper functions for travel days
+  const generateTravelDays = useCallback(
+    (amount) => {
+      const days = [];
+      for (let i = 1; i <= amount; i++) {
+        const existingDay = travelDays.find((day) => day.day === i);
+        days.push({
+          day: i,
+          title: existingDay?.title || `${i}-a diena: `,
+          description: existingDay?.description || '',
+        });
+      }
+      setTravelDays(days);
+    },
+    [travelDays]
+  );
+
+  // Effect to generate travel days when dayamount changes
+  useEffect(() => {
+    if (dayamount > 0) {
+      generateTravelDays(dayamount);
+    }
+  }, [dayamount, generateTravelDays]);
 
   function validate() {
     const errs = {};
@@ -97,46 +120,103 @@ export default function Product(props) {
     ev.preventDefault();
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    setIsSaving(true);
-    if (isUploading) {
-      await Promise.all(uploadImagesQueue);
+    if (Object.keys(errs).length > 0) {
+      toast.error('Please fix validation errors');
+      return;
     }
 
-    const data = {
-      title,
-      description,
-      price,
-      details,
-      images,
-      category,
-      brand,
-      gender,
-      sizes,
-      colors,
-      // New travel-specific fields
-      country,
-      travelType,
-      cities,
-      duration,
-      shortDescription,
-      includedinprice,
-      excludedinprice,
-      rating: rating ? parseFloat(rating) : null,
-      reviewCount: reviewCount ? parseInt(reviewCount) : null,
-      dayamount: parseInt(dayamount),
-      travelDays,
-    };
+    setIsSaving(true);
+
     try {
-      if (_id) {
-        await axios.put('/api/products', { ...data, _id });
-        toast.success('Product updated!!');
-      } else {
-        await axios.post('/api/products', data);
-        toast.success('Product created!!');
+      // Wait for any pending uploads to complete
+      if (isUploading) {
+        toast.info('Waiting for image uploads to complete...');
+        // Wait up to 30 seconds for uploads to finish
+        let waitTime = 0;
+        while (isUploading && waitTime < 30000) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          waitTime += 500;
+        }
+
+        if (isUploading) {
+          toast.error('Image uploads are taking too long. Please try again.');
+          return;
+        }
       }
-      setRedirect(true);
+
+      const data = {
+        title: title.trim(),
+        description: description.trim(),
+        price: parseFloat(price) || 0,
+        details: details.trim(),
+        images: images.filter((img) => img && img.trim() !== ''), // Filter out empty images
+        category,
+        brand: brand.trim(),
+        gender: gender.trim(),
+        sizes: sizes.trim(),
+        colors: colors.trim(),
+        // New travel-specific fields
+        country: country.trim(),
+        travelType: travelType.trim(),
+        cities: cities.trim(),
+        duration: duration.trim(),
+        shortDescription: shortDescription.trim(),
+        includedinprice: includedinprice.filter(
+          (item) => item && item.trim() !== ''
+        ),
+        excludedinprice: excludedinprice.filter(
+          (item) => item && item.trim() !== ''
+        ),
+        rating: rating ? parseFloat(rating) : null,
+        reviewCount: reviewCount ? parseInt(reviewCount) : null,
+        dayamount: parseInt(dayamount) || 1,
+        travelDays: travelDays.filter(
+          (day) => day && day.title && day.title.trim() !== ''
+        ),
+      };
+
+      let response;
+      if (_id) {
+        response = await axios.put(
+          '/api/products',
+          { ...data, _id },
+          {
+            timeout: 30000, // 30 second timeout
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        toast.success('Travel package updated successfully!');
+      } else {
+        response = await axios.post('/api/products', data, {
+          timeout: 30000, // 30 second timeout
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        toast.success('Travel package created successfully!');
+      }
+
+      // Small delay before redirect to ensure toast is seen
+      setTimeout(() => {
+        setRedirect(true);
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving product:', error);
+
+      let errorMessage = 'Failed to save travel package';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Save timeout - please try again';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Network error - check your connection';
+      } else if (error.message.includes('SecurityError')) {
+        errorMessage = 'Security error - please refresh the page and try again';
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -146,20 +226,77 @@ export default function Product(props) {
     const files = ev.target?.files;
     if (files?.length > 0) {
       setIsUploading(true);
+      const uploadPromises = [];
+      let successCount = 0;
+      let errorCount = 0;
+
       for (const file of files) {
+        // Validate file size and type
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`File ${file.name} is too large (max 10MB)`);
+          errorCount++;
+          continue;
+        }
+
+        if (!file.type.startsWith('image/')) {
+          toast.error(`File ${file.name} is not an image`);
+          errorCount++;
+          continue;
+        }
+
         const data = new FormData();
         data.append('file', file);
-        uploadImagesQueue.push(
-          axios.post('/api/upload', data).then((res) => {
-            setImages((oldImages) => [...oldImages, ...res.data.links]);
+
+        const uploadPromise = axios
+          .post('/api/upload', data, {
+            timeout: 30000, // 30 second timeout
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           })
-        );
+          .then((res) => {
+            if (res.data.links && res.data.links.length > 0) {
+              setImages((oldImages) => [...oldImages, ...res.data.links]);
+              successCount++;
+            }
+          })
+          .catch((error) => {
+            console.error(`Error uploading ${file.name}:`, error);
+            errorCount++;
+
+            let errorMessage = 'Upload failed';
+            if (error.response?.data?.error) {
+              errorMessage = error.response.data.error;
+            } else if (error.code === 'ECONNABORTED') {
+              errorMessage =
+                'Upload timeout - file too large or slow connection';
+            } else if (error.message.includes('Network')) {
+              errorMessage = 'Network error - check your connection';
+            }
+
+            toast.error(`${file.name}: ${errorMessage}`);
+          });
+
+        uploadPromises.push(uploadPromise);
       }
-      await Promise.all(uploadImagesQueue);
-      setIsUploading(false);
-      toast.success('Image uploaded');
+
+      try {
+        await Promise.allSettled(uploadPromises);
+      } catch (error) {
+        console.error('Error in upload promises:', error);
+      } finally {
+        setIsUploading(false);
+
+        if (successCount > 0) {
+          toast.success(`Successfully uploaded ${successCount} image(s)`);
+        }
+
+        if (errorCount > 0 && successCount === 0) {
+          toast.error(`Failed to upload ${errorCount} image(s)`);
+        }
+      }
     } else {
-      toast.error('An error occurred!');
+      toast.error('No files selected');
     }
   }
 
@@ -177,20 +314,6 @@ export default function Product(props) {
     updatedImages.splice(index, 1);
     setImages(updatedImages);
     toast.success('Image deleted successfully!!');
-  }
-
-  // Helper functions for travel days
-  function generateTravelDays(amount) {
-    const days = [];
-    for (let i = 1; i <= amount; i++) {
-      const existingDay = travelDays.find((day) => day.day === i);
-      days.push({
-        day: i,
-        title: existingDay?.title || `${i}-a diena: `,
-        description: existingDay?.description || '',
-      });
-    }
-    setTravelDays(days);
   }
 
   function updateTravelDay(dayIndex, field, value) {
@@ -235,13 +358,6 @@ export default function Product(props) {
     setExcludedInPrice(updated);
   }
 
-  // Effect to generate travel days when dayamount changes
-  useEffect(() => {
-    if (dayamount > 0) {
-      generateTravelDays(dayamount);
-    }
-  }, [dayamount]);
-
   // Handle AI extracted data
   const handleAIDataExtracted = (extractedData) => {
     try {
@@ -252,24 +368,39 @@ export default function Product(props) {
       if (extractedData.duration) setDuration(extractedData.duration);
       if (extractedData.travelType) setTravelType(extractedData.travelType);
       if (extractedData.price) setPrice(extractedData.price.toString());
-      if (extractedData.shortDescription) setShortDescription(extractedData.shortDescription);
+      if (extractedData.shortDescription)
+        setShortDescription(extractedData.shortDescription);
       if (extractedData.description) setDescription(extractedData.description);
       if (extractedData.details) setDetails(extractedData.details);
       if (extractedData.rating) setRating(extractedData.rating.toString());
-      if (extractedData.reviewCount) setReviewCount(extractedData.reviewCount.toString());
-      
+      if (extractedData.reviewCount)
+        setReviewCount(extractedData.reviewCount.toString());
+
       // Handle arrays
-      if (extractedData.includedinprice && Array.isArray(extractedData.includedinprice)) {
-        setIncludedInPrice(extractedData.includedinprice.filter(item => item.trim() !== ''));
+      if (
+        extractedData.includedinprice &&
+        Array.isArray(extractedData.includedinprice)
+      ) {
+        setIncludedInPrice(
+          extractedData.includedinprice.filter((item) => item.trim() !== '')
+        );
       }
-      if (extractedData.excludedinprice && Array.isArray(extractedData.excludedinprice)) {
-        setExcludedInPrice(extractedData.excludedinprice.filter(item => item.trim() !== ''));
+      if (
+        extractedData.excludedinprice &&
+        Array.isArray(extractedData.excludedinprice)
+      ) {
+        setExcludedInPrice(
+          extractedData.excludedinprice.filter((item) => item.trim() !== '')
+        );
       }
-      
+
       // Handle travel days
       if (extractedData.dayamount && extractedData.dayamount > 0) {
         setDayAmount(extractedData.dayamount);
-        if (extractedData.travelDays && Array.isArray(extractedData.travelDays)) {
+        if (
+          extractedData.travelDays &&
+          Array.isArray(extractedData.travelDays)
+        ) {
           // Set travel days after a brief delay to allow dayamount to update first
           setTimeout(() => {
             setTravelDays(extractedData.travelDays);
@@ -386,7 +517,7 @@ export default function Product(props) {
                 Papildomi laukai (suderinamumui)
               </h2>
             </div>
-            
+
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>

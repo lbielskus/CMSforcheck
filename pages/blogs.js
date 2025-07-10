@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { app } from '../lib/firebaseClient'; // adjust path if needed
+import { app } from '../lib/firebaseClient';
+import { formatDateEuropean } from '../helpers/dateHelpers';
 
 const Blogs = () => {
   const [user, setUser] = useState(null);
@@ -44,10 +45,10 @@ const Blogs = () => {
                 {post.title}
               </h2>
               <p className='text-gray-600 mb-2'>
-                Published on{' '}
+                Publikuota{' '}
                 {post.createdAt
-                  ? new Date(post.createdAt).toLocaleString()
-                  : ''}
+                  ? formatDateEuropean(post.createdAt)
+                  : 'Nežinoma data'}
               </p>
               <p className='text-gray-700'>{post.excerpt}</p>
               <div className='mt-4'>

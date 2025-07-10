@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 // Import modular components
@@ -84,6 +84,30 @@ export default function Product(props) {
       setCategories(result.data);
     });
   }, []);
+
+  // Helper functions for travel days
+  const generateTravelDays = useCallback(
+    (amount) => {
+      const days = [];
+      for (let i = 1; i <= amount; i++) {
+        const existingDay = travelDays.find((day) => day.day === i);
+        days.push({
+          day: i,
+          title: existingDay?.title || `${i}-a diena: `,
+          description: existingDay?.description || '',
+        });
+      }
+      setTravelDays(days);
+    },
+    [travelDays]
+  );
+
+  // Effect to generate travel days when dayamount changes
+  useEffect(() => {
+    if (dayamount > 0) {
+      generateTravelDays(dayamount);
+    }
+  }, [dayamount, generateTravelDays]);
 
   function validate() {
     const errs = {};
@@ -179,20 +203,6 @@ export default function Product(props) {
     toast.success('Image deleted successfully!!');
   }
 
-  // Helper functions for travel days
-  function generateTravelDays(amount) {
-    const days = [];
-    for (let i = 1; i <= amount; i++) {
-      const existingDay = travelDays.find((day) => day.day === i);
-      days.push({
-        day: i,
-        title: existingDay?.title || `${i}-a diena: `,
-        description: existingDay?.description || '',
-      });
-    }
-    setTravelDays(days);
-  }
-
   function updateTravelDay(dayIndex, field, value) {
     const updatedDays = [...travelDays];
     updatedDays[dayIndex] = {
@@ -234,13 +244,6 @@ export default function Product(props) {
     updated[index] = value;
     setExcludedInPrice(updated);
   }
-
-  // Effect to generate travel days when dayamount changes
-  useEffect(() => {
-    if (dayamount > 0) {
-      generateTravelDays(dayamount);
-    }
-  }, [dayamount]);
 
   // Handle AI extracted data
   const handleAIDataExtracted = (extractedData) => {

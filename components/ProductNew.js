@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Spinner from './Spinner';
-import { ReactSortable } from 'react-sortablejs';
 import toast from 'react-hot-toast';
 import TinyMCEEditor from './TinyMCEEditor';
 
@@ -76,6 +75,30 @@ export default function Product(props) {
       setCategories(result.data);
     });
   }, []);
+
+  // Helper functions for travel days
+  const generateTravelDays = useCallback(
+    (amount) => {
+      const days = [];
+      for (let i = 1; i <= amount; i++) {
+        const existingDay = travelDays.find((day) => day.day === i);
+        days.push({
+          day: i,
+          title: existingDay?.title || `${i}-a diena: `,
+          description: existingDay?.description || '',
+        });
+      }
+      setTravelDays(days);
+    },
+    [travelDays]
+  );
+
+  // Effect to generate travel days when dayamount changes
+  useEffect(() => {
+    if (dayamount > 0) {
+      generateTravelDays(dayamount);
+    }
+  }, [dayamount, generateTravelDays]);
 
   function validate() {
     const errs = {};
@@ -172,20 +195,6 @@ export default function Product(props) {
     toast.success('Nuotrauka ištrinta!');
   }
 
-  // Helper functions for travel days
-  function generateTravelDays(amount) {
-    const days = [];
-    for (let i = 1; i <= amount; i++) {
-      const existingDay = travelDays.find((day) => day.day === i);
-      days.push({
-        day: i,
-        title: existingDay?.title || `${i}-a diena: `,
-        description: existingDay?.description || '',
-      });
-    }
-    setTravelDays(days);
-  }
-
   function updateTravelDay(dayIndex, field, value) {
     const updatedDays = [...travelDays];
     updatedDays[dayIndex] = {
@@ -227,13 +236,6 @@ export default function Product(props) {
     updated[index] = value;
     setExcludedInPrice(updated);
   }
-
-  // Effect to generate travel days when dayamount changes
-  useEffect(() => {
-    if (dayamount > 0) {
-      generateTravelDays(dayamount);
-    }
-  }, [dayamount]);
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -533,29 +535,23 @@ export default function Product(props) {
 
             {images.length > 0 && (
               <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4'>
-                <ReactSortable
-                  list={images}
-                  setList={updateImagesOrder}
-                  className='contents'
-                >
-                  {images.map((link, index) => (
-                    <div key={link} className='relative group'>
-                      <img
-                        src={link}
-                        alt={`Kelionės nuotrauka ${index + 1}`}
-                        className='w-full h-24 object-cover rounded-lg border-2 border-gray-200 cursor-move transition-transform hover:scale-105'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => handleDeleteImage(index)}
-                        className='absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600'
-                        title='Ištrinti'
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </ReactSortable>
+                {images.map((link, index) => (
+                  <div key={link} className='relative group'>
+                    <img
+                      src={link}
+                      alt={`Kelionės nuotrauka ${index + 1}`}
+                      className='w-full h-24 object-cover rounded-lg border-2 border-gray-200 transition-transform hover:scale-105'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => handleDeleteImage(index)}
+                      className='absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600'
+                      title='Ištrinti'
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
