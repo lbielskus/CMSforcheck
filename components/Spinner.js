@@ -1,9 +1,7 @@
-import { FadeLoader } from 'react-spinners';
-
-export default function Spinner() {
+export default function Spinner({ className = 'w-8 h-8' }) {
   return (
-    <>
-      <FadeLoader color='#661c94' />
-    </>
+    <div className={`${className} animate-spin`}>
+      <div className='w-full h-full border-4 border-purple-200 border-t-purple-600 rounded-full'></div>
+    </div>
   );
 }

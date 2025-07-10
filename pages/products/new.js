@@ -3,7 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { app } from '../../lib/firebaseClient'; // adjust path if needed
 import Product from '../../components/Product';
-import ReactSortable from 'react-sortablejs';
+import { ReactSortable } from 'react-sortablejs';
 
 export default function NewProduct() {
   const [user, setUser] = useState(null);

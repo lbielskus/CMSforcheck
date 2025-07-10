@@ -17,6 +17,18 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
+        // New travel-specific fields
+        country,
+        travelType,
+        cities,
+        duration,
+        shortDescription,
+        includedinprice,
+        excludedinprice,
+        rating,
+        reviewCount,
+        dayamount,
+        travelDays,
       } = req.body;
 
       if (!title || !description || !price) {
@@ -34,6 +46,18 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
+        // New travel-specific fields
+        country,
+        travelType,
+        cities,
+        duration,
+        shortDescription,
+        includedinprice: includedinprice || [],
+        excludedinprice: excludedinprice || [],
+        rating,
+        reviewCount,
+        dayamount,
+        travelDays: travelDays || [],
         createdAt: new Date().toISOString(),
       });
 
@@ -67,6 +91,18 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
+        // New travel-specific fields
+        country,
+        travelType,
+        cities,
+        duration,
+        shortDescription,
+        includedinprice,
+        excludedinprice,
+        rating,
+        reviewCount,
+        dayamount,
+        travelDays,
       } = req.body;
 
       if (!_id) {
@@ -84,6 +120,18 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
+        // New travel-specific fields
+        country,
+        travelType,
+        cities,
+        duration,
+        shortDescription,
+        includedinprice: includedinprice || [],
+        excludedinprice: excludedinprice || [],
+        rating,
+        reviewCount,
+        dayamount,
+        travelDays: travelDays || [],
         updatedAt: new Date().toISOString(),
       });
 
