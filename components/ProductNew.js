@@ -67,16 +67,10 @@ export default function ProductNew(props) {
   const [isSaving, setIsSaving] = useState(false);
   const uploadImagesQueue = [];
   const [categories, setCategories] = useState([]);
-  // Change category state to array
-  const [category, setCategory] = useState(() => {
-    if (Array.isArray(selectedCategory)) {
-      return selectedCategory.map(String);
-    } else if (typeof selectedCategory === 'string' && selectedCategory) {
-      return [selectedCategory];
-    } else {
-      return [];
-    }
-  });
+  // Change category state to string (category _id or empty string)
+  const [category, setCategory] = useState(
+    typeof selectedCategory === 'string' ? selectedCategory : ''
+  );
   const [errors, setErrors] = useState({});
 
   const AUTOSAVE_KEY = 'newProductAutosave';
@@ -141,13 +135,11 @@ export default function ProductNew(props) {
             setReviewCount(data.reviewCount || '');
             setDayAmount(data.dayamount || 1);
             setTravelDays(data.travelDays || []);
-            // Only coerce to array of strings here
-            if (Array.isArray(data.category)) {
-              setCategory(data.category.map(String));
-            } else if (typeof data.category === 'string' && data.category) {
-              setCategory([data.category]);
+            // Set category as _id string
+            if (typeof data.category === 'string') {
+              setCategory(data.category);
             } else {
-              setCategory([]);
+              setCategory('');
             }
           }
         } catch {}
@@ -179,7 +171,7 @@ export default function ProductNew(props) {
         reviewCount,
         dayamount,
         travelDays,
-        category, // now an array
+        category, // now _id string
       };
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
     }
@@ -211,7 +203,7 @@ export default function ProductNew(props) {
   function validate() {
     const errs = {};
     if (!title) errs.title = 'Kelionės pavadinimas yra privalomas';
-    if (!category || category.length === 0)
+    if (!category || typeof category !== 'string' || category.trim() === '')
       errs.category = 'Pasirinkite bent vieną kategoriją';
     if (!price) errs.price = 'Kaina yra privaloma';
     return errs;
@@ -232,28 +224,38 @@ export default function ProductNew(props) {
     }
 
     const data = {
-      title,
-      description,
-      price,
-      details,
-      images,
-      category, // now an array
-      brand,
-      gender,
-      sizes,
-      colors,
-      // New travel-specific fields
-      country,
-      travelType,
-      cities,
-      duration,
-      shortDescription,
-      includedinprice,
-      excludedinprice,
-      rating: rating ? parseFloat(rating) : null,
-      reviewCount: reviewCount ? parseInt(reviewCount) : null,
-      dayamount: parseInt(dayamount),
-      travelDays,
+      brand: brand || '',
+      category: category || '', // send _id string
+      cities: cities || '',
+      colors: colors || '',
+      country: country || '',
+      // createdAt is set by backend
+      dayamount: parseInt(dayamount) || 0,
+      description: description || '',
+      details: details || '',
+      duration: duration || '',
+      excludedinprice: Array.isArray(excludedinprice)
+        ? excludedinprice.filter(Boolean)
+        : [],
+      gender: gender || '',
+      images: Array.isArray(images) ? images.filter(Boolean) : [],
+      includedinprice: Array.isArray(includedinprice)
+        ? includedinprice.filter(Boolean)
+        : [],
+      price: price ? parseFloat(price) : 0,
+      rating: rating === '' ? null : parseFloat(rating),
+      reviewCount: reviewCount === '' ? null : parseInt(reviewCount),
+      shortDescription: shortDescription || '',
+      sizes: sizes || '',
+      title: title || '',
+      travelDays: Array.isArray(travelDays)
+        ? travelDays.map((day) => ({
+            day: parseInt(day.day) || 0,
+            description: day.description || '',
+            title: day.title || '',
+          }))
+        : [],
+      travelType: travelType || '',
     };
 
     try {
