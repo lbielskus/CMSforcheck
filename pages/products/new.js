@@ -6,17 +6,27 @@ import ProductNew from '../../components/ProductNew';
 
 export default function NewProduct() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = getAuth(app).onAuthStateChanged((firebaseUser) => {
       setUser(firebaseUser);
+      setLoading(false);
       if (!firebaseUser) {
         router.replace('/login');
       }
     });
     return () => unsubscribe();
   }, [router]);
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500'></div>
+      </div>
+    );
+  }
 
   if (!user) return null;
 

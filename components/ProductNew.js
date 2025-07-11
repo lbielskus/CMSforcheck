@@ -90,18 +90,20 @@ export default function ProductNew(props) {
   // Helper functions for travel days
   const generateTravelDays = useCallback(
     (amount) => {
-      const days = [];
-      for (let i = 1; i <= amount; i++) {
-        const existingDay = travelDays.find((day) => day.day === i);
-        days.push({
-          day: i,
-          title: existingDay?.title || `${i}-a diena: `,
-          description: existingDay?.description || '',
-        });
-      }
-      setTravelDays(days);
+      setTravelDays((prevTravelDays) => {
+        const days = [];
+        for (let i = 1; i <= amount; i++) {
+          const existingDay = prevTravelDays.find((day) => day.day === i);
+          days.push({
+            day: i,
+            title: existingDay?.title || `${i}-a diena: `,
+            description: existingDay?.description || '',
+          });
+        }
+        return days;
+      });
     },
-    [travelDays]
+    [] // No dependencies!
   );
 
   // Effect to generate travel days when dayamount changes
@@ -409,41 +411,20 @@ export default function ProductNew(props) {
 
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Kategorijos <span className='text-red-500'>*</span>
+                  Kategorija <span className='text-red-500'>*</span>
                 </label>
-                <div className='flex flex-wrap gap-2'>
+                <select
+                  className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
+                  value={category || ''}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value=''>Pasirinkite kategoriją</option>
                   {categories.map((cat) => (
-                    <label
-                      key={cat._id}
-                      className='flex items-center gap-2 text-sm bg-gray-100 rounded px-2 py-1 cursor-pointer'
-                    >
-                      <input
-                        type='checkbox'
-                        className='accent-blue-600 w-4 h-4'
-                        checked={category.includes(String(cat._id))}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setCategory(
-                              Array.from(
-                                new Set([
-                                  ...category.map(String),
-                                  String(cat._id),
-                                ])
-                              )
-                            );
-                          } else {
-                            setCategory(
-                              category.filter(
-                                (id) => String(id) !== String(cat._id)
-                              )
-                            );
-                          }
-                        }}
-                      />
+                    <option key={cat._id} value={cat._id}>
                       {cat.name}
-                    </label>
+                    </option>
                   ))}
-                </div>
+                </select>
                 {errors.category && (
                   <p className='text-red-500 text-sm mt-2 flex items-center'>
                     <svg
@@ -664,20 +645,80 @@ export default function ProductNew(props) {
             {images.length > 0 && (
               <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4'>
                 {images.map((link, index) => (
-                  <div key={link} className='relative group'>
+                  <div
+                    key={link}
+                    className='relative group flex flex-col items-center'
+                  >
                     <img
                       src={link}
                       alt={`Kelionės nuotrauka ${index + 1}`}
-                      className='w-full h-24 object-cover rounded-lg border-2 border-gray-200 transition-transform hover:scale-105'
+                      className={`w-full h-24 object-cover rounded-lg border-2 transition-transform hover:scale-105 ${
+                        index === 0 ? 'border-blue-500' : 'border-gray-200'
+                      }`}
                     />
-                    <button
-                      type='button'
-                      onClick={() => handleDeleteImage(index)}
-                      className='absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600'
-                      title='Ištrinti'
-                    >
-                      ✕
-                    </button>
+                    <div className='flex gap-1 mt-1'>
+                      <button
+                        type='button'
+                        className='px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300'
+                        disabled={index === 0}
+                        onClick={() => {
+                          if (index > 0) {
+                            const newImages = [...images];
+                            [newImages[index - 1], newImages[index]] = [
+                              newImages[index],
+                              newImages[index - 1],
+                            ];
+                            setImages(newImages);
+                          }
+                        }}
+                      >
+                        ←
+                      </button>
+                      <button
+                        type='button'
+                        className='px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300'
+                        disabled={index === images.length - 1}
+                        onClick={() => {
+                          if (index < images.length - 1) {
+                            const newImages = [...images];
+                            [newImages[index + 1], newImages[index]] = [
+                              newImages[index],
+                              newImages[index + 1],
+                            ];
+                            setImages(newImages);
+                          }
+                        }}
+                      >
+                        →
+                      </button>
+                      <button
+                        type='button'
+                        className='px-2 py-1 text-xs bg-blue-200 rounded hover:bg-blue-300'
+                        disabled={index === 0}
+                        onClick={() => {
+                          if (index > 0) {
+                            const newImages = [...images];
+                            const [selected] = newImages.splice(index, 1);
+                            newImages.unshift(selected);
+                            setImages(newImages);
+                          }
+                        }}
+                      >
+                        Set as Main
+                      </button>
+                      <button
+                        type='button'
+                        className='px-2 py-1 text-xs bg-red-200 rounded hover:bg-red-300'
+                        onClick={() => handleDeleteImage(index)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    {index === 0 && (
+                      <span className='absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded'>
+                        Main
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

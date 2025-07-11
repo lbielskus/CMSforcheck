@@ -53,30 +53,20 @@ export default function BasicInfoCard({
         </div>
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
-            Kategorijos <span className='text-red-500'>*</span>
+            Kategorija <span className='text-red-500'>*</span>
           </label>
-          <div className='flex flex-wrap gap-2'>
+          <select
+            className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
+            value={category || ''}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            <option value=''>Pasirinkite kategoriją</option>
             {categories.map((cat) => (
-              <label
-                key={cat._id}
-                className='flex items-center gap-2 text-sm bg-gray-100 rounded px-2 py-1 cursor-pointer'
-              >
-                <input
-                  type='checkbox'
-                  className='accent-blue-600 w-4 h-4'
-                  checked={category.includes(cat._id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setCategory([...category, cat._id]);
-                    } else {
-                      setCategory(category.filter((id) => id !== cat._id));
-                    }
-                  }}
-                />
+              <option key={cat._id} value={cat._id}>
                 {cat.name}
-              </label>
+              </option>
             ))}
-          </div>
+          </select>
           {errors.category && (
             <p className='text-red-500 text-xs sm:text-sm mt-1 flex items-center'>
               <svg
