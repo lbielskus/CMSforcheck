@@ -14,6 +14,7 @@ export default async function handle(req, res) {
   try {
     if (method === 'POST') {
       const {
+        _id, // allow for update via POST if _id is present
         title,
         description,
         price,
@@ -24,7 +25,6 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
-        // New travel-specific fields
         country,
         travelType,
         cities,
@@ -38,33 +38,89 @@ export default async function handle(req, res) {
         travelDays,
       } = req.body;
 
-      if (!title || !description || !price) {
+      // Normalize fields
+      const normalizedCategory = Array.isArray(category)
+        ? category.filter(Boolean).map(String)
+        : category
+        ? [String(category)]
+        : [];
+      const normalizedPrice =
+        typeof price === 'number' ? price : Number(price) || 0;
+      const normalizedIncluded = Array.isArray(includedinprice)
+        ? includedinprice.filter(Boolean)
+        : [];
+      const normalizedExcluded = Array.isArray(excludedinprice)
+        ? excludedinprice.filter(Boolean)
+        : [];
+      const normalizedImages = Array.isArray(images)
+        ? images.filter(Boolean)
+        : [];
+      const normalizedRating =
+        rating === null || rating === undefined ? null : Number(rating);
+      const normalizedReviewCount =
+        reviewCount === null || reviewCount === undefined
+          ? null
+          : Number(reviewCount);
+      const normalizedTravelDays = Array.isArray(travelDays) ? travelDays : [];
+      const normalizedDayAmount =
+        typeof dayamount === 'number' ? dayamount : Number(dayamount) || 1;
+
+      if (!title || !description || !normalizedPrice) {
         return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // If _id is present, treat as update
+      if (_id) {
+        await productsRef.doc(_id).update({
+          title,
+          description,
+          price: normalizedPrice,
+          images: normalizedImages,
+          category: normalizedCategory,
+          details,
+          brand,
+          gender,
+          sizes,
+          colors,
+          country,
+          travelType,
+          cities,
+          duration,
+          shortDescription,
+          includedinprice: normalizedIncluded,
+          excludedinprice: normalizedExcluded,
+          rating: normalizedRating,
+          reviewCount: normalizedReviewCount,
+          dayamount: normalizedDayAmount,
+          travelDays: normalizedTravelDays,
+          updatedAt: new Date().toISOString(),
+        });
+        const updatedDoc = await productsRef.doc(_id).get();
+        return res.json({ id: updatedDoc.id, ...updatedDoc.data() });
       }
 
       const docRef = await productsRef.add({
         title,
         description,
-        price,
-        images,
-        category,
+        price: normalizedPrice,
+        images: normalizedImages,
+        category: normalizedCategory,
         details,
         brand,
         gender,
         sizes,
         colors,
-        // New travel-specific fields
         country,
         travelType,
         cities,
         duration,
         shortDescription,
-        includedinprice: includedinprice || [],
-        excludedinprice: excludedinprice || [],
-        rating,
-        reviewCount,
-        dayamount,
-        travelDays: travelDays || [],
+        includedinprice: normalizedIncluded,
+        excludedinprice: normalizedExcluded,
+        rating: normalizedRating,
+        reviewCount: normalizedReviewCount,
+        dayamount: normalizedDayAmount,
+        travelDays: normalizedTravelDays,
         createdAt: new Date().toISOString(),
       });
 
@@ -98,7 +154,6 @@ export default async function handle(req, res) {
         gender,
         sizes,
         colors,
-        // New travel-specific fields
         country,
         travelType,
         cities,
@@ -112,6 +167,33 @@ export default async function handle(req, res) {
         travelDays,
       } = req.body;
 
+      // Normalize fields
+      const normalizedCategory = Array.isArray(category)
+        ? category.filter(Boolean).map(String)
+        : category
+        ? [String(category)]
+        : [];
+      const normalizedPrice =
+        typeof price === 'number' ? price : Number(price) || 0;
+      const normalizedIncluded = Array.isArray(includedinprice)
+        ? includedinprice.filter(Boolean)
+        : [];
+      const normalizedExcluded = Array.isArray(excludedinprice)
+        ? excludedinprice.filter(Boolean)
+        : [];
+      const normalizedImages = Array.isArray(images)
+        ? images.filter(Boolean)
+        : [];
+      const normalizedRating =
+        rating === null || rating === undefined ? null : Number(rating);
+      const normalizedReviewCount =
+        reviewCount === null || reviewCount === undefined
+          ? null
+          : Number(reviewCount);
+      const normalizedTravelDays = Array.isArray(travelDays) ? travelDays : [];
+      const normalizedDayAmount =
+        typeof dayamount === 'number' ? dayamount : Number(dayamount) || 1;
+
       if (!_id) {
         return res.status(400).json({ error: 'Missing _id' });
       }
@@ -119,26 +201,25 @@ export default async function handle(req, res) {
       await productsRef.doc(_id).update({
         title,
         description,
-        price,
-        images,
-        category,
+        price: normalizedPrice,
+        images: normalizedImages,
+        category: normalizedCategory,
         details,
         brand,
         gender,
         sizes,
         colors,
-        // New travel-specific fields
         country,
         travelType,
         cities,
         duration,
         shortDescription,
-        includedinprice: includedinprice || [],
-        excludedinprice: excludedinprice || [],
-        rating,
-        reviewCount,
-        dayamount,
-        travelDays: travelDays || [],
+        includedinprice: normalizedIncluded,
+        excludedinprice: normalizedExcluded,
+        rating: normalizedRating,
+        reviewCount: normalizedReviewCount,
+        dayamount: normalizedDayAmount,
+        travelDays: normalizedTravelDays,
         updatedAt: new Date().toISOString(),
       });
 
