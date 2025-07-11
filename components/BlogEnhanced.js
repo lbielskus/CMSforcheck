@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import Spinner from './Spinner';
 import TinyMCEEditor from './TinyMCEEditor';
@@ -21,6 +21,8 @@ export default function BlogEnhanced({
   const [title, setTitle] = useState(existingTitle || '');
   const [content, setContent] = useState(existingContent || '');
   const [excerpt, setExcerpt] = useState(existingExcerpt || '');
+  // Track if user has manually edited the excerpt
+  const userEditedExcerpt = useRef(false);
   const [category, setCategory] = useState(selectedCategory || '');
   const [images, setImages] = useState(existingImages || []);
   const [createdAt, setCreatedAt] = useState(
@@ -37,11 +39,48 @@ export default function BlogEnhanced({
   const [errors, setErrors] = useState({});
   const [dragActive, setDragActive] = useState(false);
 
+  const AUTOSAVE_KEY = 'newBlogAutosave';
+
   useEffect(() => {
     axios.get('/api/categories').then((result) => {
       setCategories(result.data);
     });
   }, []);
+
+  // Restore autosave if present and no _id
+  useEffect(() => {
+    if (!_id) {
+      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data) {
+            setTitle(data.title || '');
+            setContent(data.content || '');
+            setExcerpt(data.excerpt || '');
+            setCategory(data.category || '');
+            setImages(data.images || []);
+            setCreatedAt(data.createdAt || '');
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Autosave on change (only for new)
+  useEffect(() => {
+    if (!_id) {
+      const data = {
+        title,
+        content,
+        excerpt,
+        category,
+        images,
+        createdAt,
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+    }
+  }, [title, content, excerpt, category, images, createdAt, _id]);
 
   function validate() {
     const errs = {};
@@ -51,13 +90,32 @@ export default function BlogEnhanced({
     return errs;
   }
 
-  // Auto-generate excerpt from content
+  // Helper to strip HTML tags
+  function stripHtml(html) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  }
+
+  // Auto-generate excerpt from content unless user has edited
   useEffect(() => {
-    if (content && !excerpt) {
-      const autoExcerpt = content.substring(0, 200).trim();
-      setExcerpt(autoExcerpt + (content.length > 200 ? '...' : ''));
+    if (!userEditedExcerpt.current) {
+      const plain = stripHtml(content).trim();
+      let autoExcerpt = plain.slice(0, 73);
+      // If the last char is not a sentence-ending char, add ...
+      if (autoExcerpt && !/[.!?]$/.test(autoExcerpt)) {
+        autoExcerpt = autoExcerpt.trim() + '...';
+      }
+      setExcerpt(autoExcerpt);
     }
-  }, [content, excerpt]);
+    // eslint-disable-next-line
+  }, [content]);
+
+  // If user edits excerpt, stop auto-updating
+  function handleExcerptChange(ev) {
+    userEditedExcerpt.current = true;
+    setExcerpt(ev.target.value);
+  }
 
   async function uploadImages(ev) {
     const files = ev.target?.files || ev.dataTransfer?.files;
@@ -115,8 +173,10 @@ export default function BlogEnhanced({
     ev.preventDefault();
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
+    if (Object.keys(errs).length > 0) {
+      toast.error('Prašome užpildyti visus privalomus laukus.');
+      return;
+    }
     setIsSaving(true); // Format the date - if empty, use current date
     const finalCreatedAt = createdAt || getCurrentDateForInput();
 
@@ -141,6 +201,7 @@ export default function BlogEnhanced({
         await axios.post('/api/blog', data);
         toast.success('Straipsnis sukurtas!');
       }
+      localStorage.removeItem(AUTOSAVE_KEY);
       setRedirect(true);
     } catch (error) {
       toast.error('Klaida išsaugant straipsnį!');
@@ -394,7 +455,7 @@ export default function BlogEnhanced({
                   placeholder='Trumpas straipsnio aprašymas (automatiškai generuojamas iš turinio)...'
                   rows={3}
                   value={excerpt}
-                  onChange={(ev) => setExcerpt(ev.target.value)}
+                  onChange={handleExcerptChange}
                 />
                 <p className='text-sm text-gray-500 mt-1'>
                   Šis aprašymas bus rodomas straipsnių sąraše

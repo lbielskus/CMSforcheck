@@ -22,12 +22,6 @@ export default function Sidebar() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleNavigation = (e, path) => {
-    e.preventDefault();
-
-    console.log('Navigating to:', path);
-  };
-
   const handleLinkClick = () => {
     if (window.innerWidth <= 870) {
       setIsSidebarOpen(false);

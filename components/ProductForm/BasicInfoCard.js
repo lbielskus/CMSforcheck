@@ -1,32 +1,31 @@
 export default function BasicInfoCard({
   title,
   setTitle,
+  categories,
   category,
   setCategory,
   price,
   setPrice,
-  categories,
   errors,
 }) {
   return (
-    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-      <div className='flex items-center mb-6'>
+    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6'>
+      <div className='flex flex-col sm:flex-row items-center mb-4 sm:mb-6 gap-2 sm:gap-0'>
         <div className='w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold mr-3'>
           1
         </div>
-        <h2 className='text-xl font-semibold text-gray-900'>
+        <h2 className='text-lg sm:text-xl font-semibold text-gray-900'>
           Pagrindinė informacija
         </h2>
       </div>
-
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <div className='lg:col-span-2'>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
+      <div className='grid grid-cols-1 gap-4 sm:gap-6'>
+        <div>
+          <label className='block text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
             Kelionės pavadinimas <span className='text-red-500'>*</span>
           </label>
           <input
             type='text'
-            className={`block w-full rounded-lg border-2 p-4 text-lg ${
+            className={`block w-full rounded-lg border-2 p-3 sm:p-4 text-base sm:text-lg ${
               errors.title
                 ? 'border-red-300 focus:border-red-500'
                 : 'border-gray-200 focus:border-blue-500'
@@ -36,7 +35,7 @@ export default function BasicInfoCard({
             onChange={(ev) => setTitle(ev.target.value)}
           />
           {errors.title && (
-            <p className='text-red-500 text-sm mt-2 flex items-center'>
+            <p className='text-red-500 text-xs sm:text-sm mt-1 flex items-center'>
               <svg
                 className='w-4 h-4 mr-1'
                 fill='currentColor'
@@ -52,29 +51,34 @@ export default function BasicInfoCard({
             </p>
           )}
         </div>
-
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
-            Kategorija <span className='text-red-500'>*</span>
+          <label className='block text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
+            Kategorijos <span className='text-red-500'>*</span>
           </label>
-          <select
-            className={`block w-full rounded-lg border-2 p-4 text-lg ${
-              errors.category
-                ? 'border-red-300 focus:border-red-500'
-                : 'border-gray-200 focus:border-blue-500'
-            } focus:ring-0 transition-colors`}
-            value={category}
-            onChange={(ev) => setCategory(ev.target.value)}
-          >
-            <option value='0'>Pasirinkite kategoriją...</option>
+          <div className='flex flex-wrap gap-2'>
             {categories.map((cat) => (
-              <option key={cat._id} value={cat._id}>
+              <label
+                key={cat._id}
+                className='flex items-center gap-2 text-sm bg-gray-100 rounded px-2 py-1 cursor-pointer'
+              >
+                <input
+                  type='checkbox'
+                  className='accent-blue-600 w-4 h-4'
+                  checked={category.includes(cat._id)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCategory([...category, cat._id]);
+                    } else {
+                      setCategory(category.filter((id) => id !== cat._id));
+                    }
+                  }}
+                />
                 {cat.name}
-              </option>
+              </label>
             ))}
-          </select>
+          </div>
           {errors.category && (
-            <p className='text-red-500 text-sm mt-2 flex items-center'>
+            <p className='text-red-500 text-xs sm:text-sm mt-1 flex items-center'>
               <svg
                 className='w-4 h-4 mr-1'
                 fill='currentColor'
@@ -90,15 +94,17 @@ export default function BasicInfoCard({
             </p>
           )}
         </div>
-
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
+          <label className='block text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
             Kaina (€) <span className='text-red-500'>*</span>
           </label>
-          <div className='relative'>
+          <div className='relative flex items-center'>
+            <span className='absolute left-3 text-gray-500 text-base sm:text-lg pointer-events-none'>
+              €
+            </span>
             <input
               type='number'
-              className={`block w-full rounded-lg border-2 p-4 text-lg pl-8 ${
+              className={`block w-full rounded-lg border-2 p-3 sm:p-4 text-base sm:text-lg pl-8 ${
                 errors.price
                   ? 'border-red-300 focus:border-red-500'
                   : 'border-gray-200 focus:border-blue-500'
@@ -106,13 +112,11 @@ export default function BasicInfoCard({
               placeholder='0'
               value={price}
               onChange={(ev) => setPrice(ev.target.value)}
+              style={{ paddingLeft: '2.25rem' }}
             />
-            <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-              <span className='text-gray-500 text-lg'>€</span>
-            </div>
           </div>
           {errors.price && (
-            <p className='text-red-500 text-sm mt-2 flex items-center'>
+            <p className='text-red-500 text-xs sm:text-sm mt-1 flex items-center'>
               <svg
                 className='w-4 h-4 mr-1'
                 fill='currentColor'

@@ -1,3 +1,5 @@
+import TinyMCEEditor from '../TinyMCEEditor';
+
 export default function TravelDaysCard({
   dayamount,
   setDayAmount,
@@ -92,15 +94,14 @@ export default function TravelDaysCard({
                   <label className='block text-sm font-medium text-gray-700 mb-2'>
                     Dienos aprašymas
                   </label>
-                  <textarea
-                    className='w-full rounded-lg border-2 border-white bg-white p-3 focus:border-teal-500 focus:ring-0 transition-colors shadow-sm resize-none'
-                    placeholder='Detalus dienos aprašymas: veiklos, maršrutas, įdomūs faktai...'
-                    rows={4}
-                    value={day.description}
-                    onChange={(ev) =>
-                      updateTravelDay(index, 'description', ev.target.value)
-                    }
-                  />
+                  <div className='border-2 border-white bg-white rounded-lg overflow-hidden'>
+                    <TinyMCEEditor
+                      value={day.description}
+                      onEditorChange={(content) =>
+                        updateTravelDay(index, 'description', content)
+                      }
+                    />
+                  </div>
                   <div className='flex items-center mt-2 text-xs text-gray-500'>
                     <svg
                       className='w-3 h-3 mr-1'

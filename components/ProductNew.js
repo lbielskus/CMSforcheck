@@ -5,7 +5,7 @@ import Spinner from './Spinner';
 import toast from 'react-hot-toast';
 import TinyMCEEditor from './TinyMCEEditor';
 
-export default function Product(props) {
+export default function ProductNew(props) {
   const {
     _id,
     title: existingTitle,
@@ -67,8 +67,19 @@ export default function Product(props) {
   const [isSaving, setIsSaving] = useState(false);
   const uploadImagesQueue = [];
   const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState(selectedCategory || '');
+  // Change category state to array
+  const [category, setCategory] = useState(() => {
+    if (Array.isArray(selectedCategory)) {
+      return selectedCategory.map(String);
+    } else if (typeof selectedCategory === 'string' && selectedCategory) {
+      return [selectedCategory];
+    } else {
+      return [];
+    }
+  });
   const [errors, setErrors] = useState({});
+
+  const AUTOSAVE_KEY = 'newProductAutosave';
 
   useEffect(() => {
     axios.get('/api/categories').then((result) => {
@@ -100,10 +111,106 @@ export default function Product(props) {
     }
   }, [dayamount, generateTravelDays]);
 
+  // Restore autosave if present and no _id
+  useEffect(() => {
+    if (!_id) {
+      const saved = localStorage.getItem(AUTOSAVE_KEY);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data) {
+            setTitle(data.title || '');
+            setDescription(data.description || '');
+            setPrice(data.price || '');
+            setImages(data.images || []);
+            setDetails(data.details || '');
+            setBrand(data.brand || '');
+            setColors(data.colors || '');
+            setGender(data.gender || '');
+            setSizes(data.sizes || '');
+            setCountry(data.country || '');
+            setTravelType(data.travelType || '');
+            setCities(data.cities || '');
+            setDuration(data.duration || '');
+            setShortDescription(data.shortDescription || '');
+            setIncludedInPrice(data.includedinprice || []);
+            setExcludedInPrice(data.excludedinprice || []);
+            setRating(data.rating || '');
+            setReviewCount(data.reviewCount || '');
+            setDayAmount(data.dayamount || 1);
+            setTravelDays(data.travelDays || []);
+            // Only coerce to array of strings here
+            if (Array.isArray(data.category)) {
+              setCategory(data.category.map(String));
+            } else if (typeof data.category === 'string' && data.category) {
+              setCategory([data.category]);
+            } else {
+              setCategory([]);
+            }
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Autosave on change (only for new)
+  useEffect(() => {
+    if (!_id) {
+      const data = {
+        title,
+        description,
+        price,
+        images,
+        details,
+        brand,
+        colors,
+        gender,
+        sizes,
+        country,
+        travelType,
+        cities,
+        duration,
+        shortDescription,
+        includedinprice,
+        excludedinprice,
+        rating,
+        reviewCount,
+        dayamount,
+        travelDays,
+        category, // now an array
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+    }
+  }, [
+    title,
+    description,
+    price,
+    images,
+    details,
+    brand,
+    colors,
+    gender,
+    sizes,
+    country,
+    travelType,
+    cities,
+    duration,
+    shortDescription,
+    includedinprice,
+    excludedinprice,
+    rating,
+    reviewCount,
+    dayamount,
+    travelDays,
+    category,
+    _id,
+  ]);
+
   function validate() {
     const errs = {};
     if (!title) errs.title = 'Kelionės pavadinimas yra privalomas';
-    if (!category || category === '0') errs.category = 'Pasirinkite kategoriją';
+    if (!category || category.length === 0)
+      errs.category = 'Pasirinkite bent vieną kategoriją';
     if (!price) errs.price = 'Kaina yra privaloma';
     return errs;
   }
@@ -112,7 +219,10 @@ export default function Product(props) {
     ev.preventDefault();
     const errs = validate();
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      toast.error('Prašome užpildyti visus privalomus laukus.');
+      return;
+    }
 
     setIsSaving(true);
     if (isUploading) {
@@ -125,7 +235,7 @@ export default function Product(props) {
       price,
       details,
       images,
-      category,
+      category, // now an array
       brand,
       gender,
       sizes,
@@ -152,6 +262,7 @@ export default function Product(props) {
         await axios.post('/api/products', data);
         toast.success('Kelionė sukurta!');
       }
+      localStorage.removeItem(AUTOSAVE_KEY);
       setRedirect(true);
     } finally {
       setIsSaving(false);
@@ -298,24 +409,41 @@ export default function Product(props) {
 
               <div>
                 <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Kategorija <span className='text-red-500'>*</span>
+                  Kategorijos <span className='text-red-500'>*</span>
                 </label>
-                <select
-                  className={`block w-full rounded-lg border-2 p-4 text-lg ${
-                    errors.category
-                      ? 'border-red-300 focus:border-red-500'
-                      : 'border-gray-200 focus:border-blue-500'
-                  } focus:ring-0 transition-colors`}
-                  value={category}
-                  onChange={(ev) => setCategory(ev.target.value)}
-                >
-                  <option value='0'>Pasirinkite kategoriją...</option>
+                <div className='flex flex-wrap gap-2'>
                   {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
+                    <label
+                      key={cat._id}
+                      className='flex items-center gap-2 text-sm bg-gray-100 rounded px-2 py-1 cursor-pointer'
+                    >
+                      <input
+                        type='checkbox'
+                        className='accent-blue-600 w-4 h-4'
+                        checked={category.includes(String(cat._id))}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setCategory(
+                              Array.from(
+                                new Set([
+                                  ...category.map(String),
+                                  String(cat._id),
+                                ])
+                              )
+                            );
+                          } else {
+                            setCategory(
+                              category.filter(
+                                (id) => String(id) !== String(cat._id)
+                              )
+                            );
+                          }
+                        }}
+                      />
                       {cat.name}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
                 {errors.category && (
                   <p className='text-red-500 text-sm mt-2 flex items-center'>
                     <svg

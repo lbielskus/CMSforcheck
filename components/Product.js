@@ -75,7 +75,14 @@ export default function Product(props) {
   const [isSaving, setIsSaving] = useState(false);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [categories, setCategories] = useState([]);
-  const [category, setCategory] = useState(selectedCategory || '');
+  // Change category state to array
+  const [category, setCategory] = useState(
+    Array.isArray(selectedCategory)
+      ? selectedCategory
+      : selectedCategory
+      ? [selectedCategory]
+      : []
+  );
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -111,7 +118,8 @@ export default function Product(props) {
   function validate() {
     const errs = {};
     if (!title) errs.title = 'Antraštė yra privaloma';
-    if (!category || category === '0') errs.category = 'Pasirinkite kategoriją';
+    if (!category || category.length === 0)
+      errs.category = 'Pasirinkite bent vieną kategoriją';
     if (!price) errs.price = 'Kaina yra privaloma';
     return errs;
   }
@@ -150,7 +158,7 @@ export default function Product(props) {
         price: parseFloat(price) || 0,
         details: details.trim(),
         images: images.filter((img) => img && img.trim() !== ''), // Filter out empty images
-        category,
+        category, // now an array
         brand: brand.trim(),
         gender: gender.trim(),
         sizes: sizes.trim(),
@@ -428,25 +436,19 @@ export default function Product(props) {
           </p>
         </div>
 
-        {/* AI Document Parser - Only show for new trips */}
-        {!_id && (
-          <AIDocumentParser
-            onDataExtracted={handleAIDataExtracted}
-            isProcessing={isAIProcessing}
-            setIsProcessing={setIsAIProcessing}
-          />
-        )}
+        {/* Remove AI Document Parser */}
+        {/* Remove Papildomi laukai (brand, colors, gender, sizes) section */}
 
         <form onSubmit={createProduct} className='space-y-6'>
           {/* Basic Information Card */}
           <BasicInfoCard
             title={title}
             setTitle={setTitle}
+            categories={categories}
             category={category}
             setCategory={setCategory}
             price={price}
             setPrice={setPrice}
-            categories={categories}
             errors={errors}
           />
 
@@ -506,72 +508,6 @@ export default function Product(props) {
             updateTravelDay={updateTravelDay}
             generateTravelDays={generateTravelDays}
           />
-
-          {/* Legacy fields card (for backward compatibility) */}
-          <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-            <div className='flex items-center mb-6'>
-              <div className='w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white font-semibold mr-3'>
-                7
-              </div>
-              <h2 className='text-xl font-semibold text-gray-900'>
-                Papildomi laukai (suderinamumui)
-              </h2>
-            </div>
-
-            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Prekės ženklas
-                </label>
-                <input
-                  type='text'
-                  className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
-                  placeholder='Įveskite prekės ženklą...'
-                  value={brand}
-                  onChange={(ev) => setBrand(ev.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Spalvos
-                </label>
-                <input
-                  type='text'
-                  className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
-                  placeholder='Įveskite spalvas...'
-                  value={colors}
-                  onChange={(ev) => setColors(ev.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Lytis
-                </label>
-                <input
-                  type='text'
-                  className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
-                  placeholder='Įveskite lytį...'
-                  value={gender}
-                  onChange={(ev) => setGender(ev.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  Dydžiai
-                </label>
-                <input
-                  type='text'
-                  className='block w-full rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0 p-3 transition-colors'
-                  placeholder='Įveskite dydžius...'
-                  value={sizes}
-                  onChange={(ev) => setSizes(ev.target.value)}
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Submit Actions Card */}
           <SubmitActionsCard

@@ -92,34 +92,81 @@ export default function ImageUploadCard({
           </p>
           <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
             {images.map((link, index) => (
-              <div key={index} className='relative group'>
+              <div
+                key={link}
+                className='relative group flex flex-col items-center'
+              >
                 <img
                   src={link}
                   alt={`Nuotrauka ${index + 1}`}
-                  className='w-full h-32 object-cover rounded-lg border-2 border-gray-200 transition-transform group-hover:scale-105'
+                  className='w-full h-24 object-cover rounded-lg border-2 border-gray-200 transition-transform hover:scale-105'
                 />
-                <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded-lg'></div>
+                <div className='flex gap-1 mt-2'>
+                  <button
+                    type='button'
+                    className='p-1 rounded bg-gray-100 hover:bg-gray-200'
+                    disabled={index === 0}
+                    onClick={() =>
+                      updateImagesOrder([
+                        ...images.slice(0, index - 1),
+                        images[index],
+                        images[index - 1],
+                        ...images.slice(index + 1),
+                      ])
+                    }
+                    title='Perkelti kairėn'
+                  >
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M15 19l-7-7 7-7'
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type='button'
+                    className='p-1 rounded bg-gray-100 hover:bg-gray-200'
+                    disabled={index === images.length - 1}
+                    onClick={() =>
+                      updateImagesOrder([
+                        ...images.slice(0, index),
+                        images[index + 1],
+                        images[index],
+                        ...images.slice(index + 2),
+                      ])
+                    }
+                    title='Perkelti dešinėn'
+                  >
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M9 5l7 7-7 7'
+                      />
+                    </svg>
+                  </button>
+                </div>
                 <button
                   type='button'
                   onClick={() => handleDeleteImage(index)}
-                  className='absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 flex items-center justify-center'
-                  title='Ištrinti nuotrauką'
+                  className='absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs hover:bg-red-600'
+                  title='Ištrinti'
                 >
-                  <svg
-                    className='w-4 h-4'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
+                  ✕
                 </button>
-                <div className='absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity'>
-                  {index + 1}
-                </div>
               </div>
             ))}
           </div>

@@ -17,18 +17,17 @@ export default function TravelDetailsCard({
   setReviewCount,
 }) {
   return (
-    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-      <div className='flex items-center mb-6'>
+    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6'>
+      <div className='flex flex-col sm:flex-row items-center mb-4 sm:mb-6 gap-2 sm:gap-0'>
         <div className='w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold mr-3'>
           2
         </div>
-        <h2 className='text-xl font-semibold text-gray-900'>
+        <h2 className='text-lg sm:text-xl font-semibold text-gray-900'>
           Kelionės informacija
         </h2>
       </div>
-
-      <div className='space-y-6'>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+      <div className='space-y-4 sm:space-y-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6'>
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-2'>
               Šalis
@@ -76,16 +75,16 @@ export default function TravelDetailsCard({
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 mb-2'>
+          <label className='block text-sm font-medium text-gray-700 mb-1 sm:mb-2'>
             Pagrindinė informacija
           </label>
           <div className='border-2 border-gray-200 rounded-lg overflow-hidden focus-within:border-green-500 transition-colors'>
             <TinyMCEEditor
               value={shortDescription}
-              onEditorChange={(content) => setShortDescription(content)}
+              onEditorChange={setShortDescription}
             />
           </div>
-          <p className='text-xs text-gray-500 mt-2'>
+          <p className='text-xs text-gray-500 mt-1 sm:mt-2'>
             Pagrindinė kelionės informacija, rodoma kelionės puslapyje.
           </p>
         </div>

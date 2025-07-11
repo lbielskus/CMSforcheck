@@ -1,4 +1,11 @@
 import { adminDb } from '../../lib/firebaseAdmin';
+import cloudinary from 'cloudinary';
+
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export default async function handle(req, res) {
   const productsRef = adminDb.collection('products');
@@ -139,6 +146,28 @@ export default async function handle(req, res) {
       res.json({ id: updatedDoc.id, ...updatedDoc.data() });
     } else if (method === 'DELETE') {
       if (req.query?.id) {
+        // Fetch the product to get its images
+        const doc = await productsRef.doc(req.query.id).get();
+        const data = doc.data();
+        const images = data?.images || [];
+        // Delete images from Cloudinary
+        for (const imageUrl of images) {
+          if (
+            typeof imageUrl === 'string' &&
+            imageUrl.includes('cloudinary.com')
+          ) {
+            // Extract public_id from the URL
+            const matches = imageUrl.match(/ecommerce-app\/([^./]+)\./);
+            const publicId = matches ? `ecommerce-app/${matches[1]}` : null;
+            if (publicId) {
+              try {
+                await cloudinary.v2.uploader.destroy(publicId);
+              } catch (err) {
+                console.error('Cloudinary delete error:', err);
+              }
+            }
+          }
+        }
         await productsRef.doc(req.query.id).delete();
         res.json({ success: true });
       } else {

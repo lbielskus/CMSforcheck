@@ -2,6 +2,46 @@
 
 Content management system by LB Websites 2024
 
+## To Do
+
+Here's a short list of fields you need to use in your frontend website:
+
+BLOG POSTS (from CMS blog collection):
+title - Blog post title
+content - Rich text content (with HTML formatting from TinyMCE)
+excerpt - Short description for blog lists
+category - Blog category object/ID
+images - Array of image URLs
+createdAt - Publication date
+\_id - Unique post ID
+PRODUCTS/KELIONĖS (from CMS products collection):
+Basic Info:
+title - Travel title
+description - Detailed description (rich text/HTML)
+details - Short description for lists
+price - Price
+images - Array of image URLs
+category - Product category object/ID
+Travel-Specific:
+country - Country name
+travelType - Type of travel
+cities - Cities visited
+duration - Trip duration
+shortDescription - Main info section (rich text/HTML)
+rating - Rating (0-5)
+reviewCount - Number of reviews
+includedinprice - Array of included services
+excludedinprice - Array of excluded services
+Travel Days:
+dayamount - Number of days
+travelDays - Array of objects:
+CATEGORIES (for both blogs and products):
+name - Category name
+description - Category description
+images - Category images
+parent - Parent category (if nested)
+Note: All rich text fields (content, description, shortDescription) contain HTML from TinyMCE, so use dangerouslySetInnerHTML or proper HTML rendering in React.
+
 ## Recent Updates (2025-01-10)
 
 - ✅ Fixed sidebar navigation with active state highlighting

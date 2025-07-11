@@ -7,15 +7,16 @@ export default function DescriptionsCard({
   setDetails,
 }) {
   return (
-    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-6'>
-      <div className='flex items-center mb-6'>
+    <div className='bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6'>
+      <div className='flex flex-col sm:flex-row items-center mb-4 sm:mb-6 gap-2 sm:gap-0'>
         <div className='w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-semibold mr-3'>
           4
         </div>
-        <h2 className='text-xl font-semibold text-gray-900'>Aprašymai</h2>
+        <h2 className='text-lg sm:text-xl font-semibold text-gray-900'>
+          Aprašymai
+        </h2>
       </div>
-
-      <div className='space-y-6'>
+      <div className='space-y-4 sm:space-y-6'>
         <div>
           <label className='block text-sm font-medium text-gray-700 mb-2'>
             Detalus aprašymas

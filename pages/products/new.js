@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { app } from '../../lib/firebaseClient'; // adjust path if needed
-import Product from '../../components/Product';
+import ProductNew from '../../components/ProductNew';
 
 export default function NewProduct() {
   const [user, setUser] = useState(null);
@@ -33,7 +33,7 @@ export default function NewProduct() {
 
         <hr className='my-8 h-px border-0 bg-gray-300' />
         <div className='my-10 max-sm:my-12'>
-          <Product />
+          <ProductNew />
         </div>
       </section>
     </>
